@@ -9,8 +9,8 @@ import pyaudio
 import numpy as np
 import wave
 import os
-import matplotlib.pyplot as plt
-import struct
+#import matplotlib.pyplot as plt
+#import struct
 
 os.chdir('C:/Users/Publico/Desktop/Instrumentacion')
 # %%
@@ -34,7 +34,36 @@ stream.stop_stream()
 stream.close()
 
 p.terminate()
+# %%
+CHUNK = 1024
 
+#if len(sys.argv) < 2:
+#    print("Plays a wave file.\n\nUsage: %s filename.wav" % sys.argv[0])
+#    sys.exit(-1)
+#wf = wave.open('output.wav', 'rb')
+volume = 0.1     # range [0.0, 1.0]
+fs = 44100       # sampling rate, Hz, must be integer
+duration = 2.0   # in seconds, may be float
+f = 440.0        # sine frequency, Hz, may be float
+samples = volume*(np.sin(2*np.pi*np.arange(fs*duration)*f/fs)).astype(np.float32)
+p = pyaudio.PyAudio()
+
+stream = p.open(format=pyaudio.paFloat32,
+                channels=1,
+                rate=fs,
+                output=True)
+
+fin = CHUNK
+
+while fin < len(samples):
+    data = samples[fin-CHUNK:fin].tobytes()
+    stream.write(data)
+    fin += CHUNK
+
+stream.stop_stream()
+stream.close()
+
+p.terminate()
 
 # %%
    """PyAudio example: Record a few seconds of audio and save to a WAVE file."""
@@ -75,27 +104,4 @@ wf.setsampwidth(p.get_sample_size(FORMAT))
 wf.setframerate(RATE)
 wf.writeframes(b''.join(frames))
 wf.close()
-# %%
-CHUNK = 1024
 
-if len(sys.argv) < 2:
-    print("Plays a wave file.\n\nUsage: %s filename.wav" % sys.argv[0])
-    sys.exit(-1)
-wf = wave.open('output.wav', 'rb')
-p = pyaudio.PyAudio()
-
-stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
-                channels=wf.getnchannels(),
-                rate=wf.getframerate(),
-                output=True)
-
-data = wf.readframes(CHUNK)
-
-while data != '':
-    stream.write(data)
-    data = wf.readframes(CHUNK)
-
-stream.stop_stream()
-stream.close()
-
-p.terminate()
